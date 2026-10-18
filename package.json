@@ -1,0 +1,48 @@
+{
+  "name": "interview-assistant",
+  "version": "1.0.0",
+  "description": "Stealth AI interview assistant with screen-share invisible overlay and multi-model BYOK support",
+  "main": "dist-electron/main/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build:electron": "tsc -p tsconfig.electron.json",
+    "build:ui": "tsc && vite build",
+    "build": "npm run build:ui && npm run build:electron",
+    "start": "tsc -p tsconfig.electron.json && electron --no-sandbox --disable-dev-shm-usage .",
+    "electron": "electron --no-sandbox --disable-dev-shm-usage .",
+    "test": "node tests/llm-test.js",
+    "test:e2e": "electron --no-sandbox --disable-dev-shm-usage --disable-gpu --ozone-platform=headless --headless tests/e2e-app-test.js"
+  },
+  "keywords": [
+    "interview-assistant",
+    "electron",
+    "ai",
+    "stealth-overlay",
+    "screen-share-protection",
+    "gemini",
+    "openai",
+    "claude"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "koffi": "^2.9.2",
+    "lucide-react": "^0.475.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwind-merge": "^3.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.19",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "electron": "^33.2.1",
+    "postcss": "^8.5.1",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.3",
+    "vite": "^5.4.11"
+  }
+}
