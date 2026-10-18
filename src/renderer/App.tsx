@@ -6,6 +6,7 @@ import { TranscriptFeed } from './components/TranscriptFeed';
 import { AIResponseCard } from './components/AIResponseCard';
 import { SettingsModal } from './components/SettingsModal';
 import { ScreenShareTester } from './components/ScreenShareTester';
+import { TestAssistantModal } from './components/TestAssistantModal';
 import { DualAudioCaptureService } from './services/audioCapture';
 import { STTService } from './services/sttService';
 import { LLMService } from './services/llmService';
@@ -26,6 +27,7 @@ export const App: React.FC = () => {
   // Modals
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isTesterOpen, setIsTesterOpen] = useState(false);
+  const [isTestModalOpen, setIsTestModalOpen] = useState(false);
 
   // Manual query input fallback
   const [manualInput, setManualInput] = useState('');
@@ -251,6 +253,31 @@ export const App: React.FC = () => {
     }
   };
 
+  const handleInjectTestConversation = (question: string, answer?: string) => {
+    const testTurn: SpeakerTurn = {
+      id: Math.random().toString(36).substring(7),
+      speaker: 'interviewer',
+      text: question,
+      timestamp: Date.now(),
+      isFinal: true,
+    };
+    setTurns((prev) => [...prev.slice(-14), testTurn]);
+
+    if (answer) {
+      setAiResponse({
+        id: Math.random().toString(36).substring(7),
+        query: question,
+        content: answer,
+        isStreaming: false,
+        timestamp: Date.now(),
+        mode: settings?.promptMode || 'coding',
+        model: settings?.activeModel || 'gemini-3.8-flash',
+      });
+    } else {
+      handleTriggerAI(question);
+    }
+  };
+
   if (!settings) {
     return (
       <div className="flex items-center justify-center h-screen bg-transparent">
@@ -274,6 +301,7 @@ export const App: React.FC = () => {
         onToggleClickThrough={handleToggleClickThrough}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenTester={() => setIsTesterOpen(true)}
+        onOpenTestModal={() => setIsTestModalOpen(true)}
         onTriggerAI={() => handleTriggerAI()}
         onClear={handleClear}
         onMinimize={() => window.electronAPI?.minimizeWindow()}
@@ -291,6 +319,7 @@ export const App: React.FC = () => {
           response={aiResponse}
           onRegenerate={() => handleTriggerAI()}
           onClear={() => setAiResponse(null)}
+          onRunQuickTest={() => handleTriggerAI('Can you explain how a Hash Map handles collisions, and compare chaining vs open addressing?')}
           fontSize={settings.fontSize}
         />
       </div>
@@ -328,6 +357,14 @@ export const App: React.FC = () => {
         isOpen={isTesterOpen}
         onClose={() => setIsTesterOpen(false)}
         stealthStatus={stealthStatus}
+      />
+
+      <TestAssistantModal
+        isOpen={isTestModalOpen}
+        onClose={() => setIsTestModalOpen(false)}
+        settings={settings}
+        micLevel={micLevel}
+        onInjectTestConversation={handleInjectTestConversation}
       />
     </div>
   );

@@ -10,7 +10,8 @@ import {
   Minus, 
   X, 
   Sparkles,
-  Trash2
+  Trash2,
+  FlaskConical
 } from 'lucide-react';
 import { AppSettings, PromptMode } from '../../shared/types';
 import { StealthStatus } from '../../main/stealth';
@@ -25,6 +26,7 @@ interface OverlayHUDProps {
   onToggleClickThrough: () => void;
   onOpenSettings: () => void;
   onOpenTester: () => void;
+  onOpenTestModal: () => void;
   onTriggerAI: () => void;
   onClear: () => void;
   onMinimize: () => void;
@@ -42,6 +44,7 @@ export const OverlayHUD: React.FC<OverlayHUDProps> = ({
   onToggleClickThrough,
   onOpenSettings,
   onOpenTester,
+  onOpenTestModal,
   onTriggerAI,
   onClear,
   onMinimize,
@@ -137,6 +140,15 @@ export const OverlayHUD: React.FC<OverlayHUDProps> = ({
           className="p-1.5 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-white transition-colors"
         >
           <Video className="w-3.5 h-3.5" />
+        </button>
+
+        {/* Test Speech STT & AI Output */}
+        <button
+          onClick={onOpenTestModal}
+          title="Test Transcription (STT) & AI Output"
+          className="p-1.5 rounded-lg hover:bg-indigo-500/20 text-indigo-400 hover:text-indigo-200 transition-colors"
+        >
+          <FlaskConical className="w-3.5 h-3.5" />
         </button>
 
         {/* Click-through toggle */}

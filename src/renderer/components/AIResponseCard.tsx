@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { AIResponse } from '../../shared/types';
-import { Sparkles, Copy, Check, RefreshCw, Code, LayoutGrid, HeartHandshake, Zap } from 'lucide-react';
+import { Sparkles, Copy, Check, RefreshCw, Code, LayoutGrid, HeartHandshake, Zap, Play } from 'lucide-react';
 
 interface AIResponseCardProps {
   response: AIResponse | null;
   onRegenerate: () => void;
   onClear: () => void;
+  onRunQuickTest?: () => void;
   fontSize?: 'sm' | 'base' | 'lg';
 }
 
@@ -13,6 +14,7 @@ export const AIResponseCard: React.FC<AIResponseCardProps> = ({
   response,
   onRegenerate,
   onClear,
+  onRunQuickTest,
   fontSize = 'base',
 }) => {
   const [copied, setCopied] = useState(false);
@@ -48,6 +50,15 @@ export const AIResponseCard: React.FC<AIResponseCardProps> = ({
         <p className="text-[11px] text-gray-500 mt-0.5">
           AI triggers automatically when interviewer asks a question, or press <kbd className="px-1.5 py-0.5 bg-gray-800 rounded text-gray-300 border border-gray-700 text-[10px]">Ctrl+Alt+Space</kbd>
         </p>
+        {onRunQuickTest && (
+          <button
+            onClick={onRunQuickTest}
+            className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/40 border border-indigo-500/30 text-indigo-300 hover:text-white text-[11px] font-medium transition-all"
+          >
+            <Play className="w-3 h-3 text-indigo-400" />
+            <span>Test Interviewer Question & Output</span>
+          </button>
+        )}
       </div>
     );
   }
