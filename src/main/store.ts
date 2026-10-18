@@ -5,7 +5,7 @@ import { AppSettings } from '../shared/types';
 
 const DEFAULT_SETTINGS: AppSettings = {
   activeProvider: 'gemini',
-  activeModel: 'gemini-2.5-flash',
+  activeModel: 'gemini-3.8-flash',
   promptMode: 'coding',
   sttProvider: 'deepgram',
   vadSensitivity: 0.5,
@@ -50,7 +50,11 @@ export class SettingsStore {
     try {
       if (fs.existsSync(this.filePath)) {
         const data = fs.readFileSync(this.filePath, 'utf-8');
-        return { ...DEFAULT_SETTINGS, ...JSON.parse(data) };
+        const parsed = { ...DEFAULT_SETTINGS, ...JSON.parse(data) };
+        if (parsed.activeModel === 'gemini-2.5-flash' || parsed.activeModel === 'gemini-1.5-flash') {
+          parsed.activeModel = 'gemini-3.8-flash';
+        }
+        return parsed;
       }
     } catch (e) {
       console.warn('Could not read existing settings file, falling back to defaults', e);

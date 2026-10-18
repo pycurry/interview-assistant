@@ -134,8 +134,15 @@ Provide 3-5 punchy, bulleted talking points that the candidate can immediately s
     const apiKey = settings.geminiApiKey;
     if (!apiKey) throw new Error('Missing Gemini API Key. Please add it in Settings.');
 
-    const model = settings.activeModel || 'gemini-2.5-flash';
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`;
+    let model = settings.activeModel || 'gemini-3.8-flash';
+    // Auto-migrate deprecated models to modern Gemini 3.8 equivalents
+    if (model === 'gemini-2.5-flash' || model === 'gemini-1.5-flash') {
+      model = 'gemini-3.8-flash';
+    } else if (model === 'gemini-2.5-pro' || model === 'gemini-1.5-pro') {
+      model = 'gemini-3.8-pro';
+    }
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse`;
 
     const contents = [
       { role: 'user', parts: [{ text: systemPrompt }] },
@@ -148,7 +155,10 @@ Provide 3-5 punchy, bulleted talking points that the candidate can immediately s
 
     const response = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': apiKey,
+      },
       body: JSON.stringify({ contents }),
       signal,
     });

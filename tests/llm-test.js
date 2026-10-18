@@ -5,7 +5,7 @@ console.log('=== TESTING LLM PROMPT GENERATION & CONTEXT ENGINE ===');
 // Mock settings
 const testSettings = {
   activeProvider: 'gemini',
-  activeModel: 'gemini-2.5-flash',
+  activeModel: 'gemini-3.8-flash',
   promptMode: 'coding',
   resumeText: 'Senior Backend Engineer with 5 years in Distributed Systems and Go.',
   jobDescriptionText: 'Staff Software Engineer - Infrastructure and High-Throughput Pipelines.',

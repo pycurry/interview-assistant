@@ -15,7 +15,7 @@ An AI-powered desktop co-pilot engineered to listen to technical & behavioral in
   - **Candidate Channel:** Captured via standard microphone input with Voice Activity Detection (VAD).
   - Eliminates the need for speaker diarization models and provides separate conversation turn tracking.
 - **Multi-Model BYOK (Bring Your Own Key) Support:**
-  - **Google Gemini:** `gemini-2.5-flash`, `gemini-2.5-pro`, `gemini-1.5-flash`
+  - **Google Gemini:** `gemini-3.8-flash`, `gemini-3.8-pro`
   - **OpenAI:** `gpt-4o`, `gpt-4o-mini`, `o3-mini`, `o1`
   - **Anthropic Claude:** `claude-3-5-sonnet`, `claude-3-7-sonnet`, `claude-3-5-haiku`
   - **DeepSeek:** `deepseek-chat`, `deepseek-reasoner` (R1)
