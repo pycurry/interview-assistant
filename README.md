@@ -33,6 +33,7 @@ An AI-powered desktop co-pilot engineered to listen to technical & behavioral in
   - Emergency Panic Hide hotkey (`Ctrl + Alt + H`).
   - Instant AI trigger hotkey (`Ctrl + Alt + Space`).
   - Clear transcript hotkey (`Ctrl + Alt + C`).
+  - Interactive Diagnostic & Test Suite: One-click testing of microphone speech-to-text (STT) and live AI model streaming output before interviews.
   - Resume & Job Description grounding for tailored personal answers.
 
 ---
