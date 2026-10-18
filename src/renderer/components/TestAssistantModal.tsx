@@ -70,6 +70,16 @@ export const TestAssistantModal: React.FC<TestAssistantModalProps> = ({
   const [sttError, setSttError] = useState('');
   const recognitionRef = useRef<any>(null);
 
+  const stopSttTest = () => {
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch (e) {}
+      recognitionRef.current = null;
+    }
+    setIsRecordingStt(false);
+  };
+
   useEffect(() => {
     if (!isOpen) {
       stopSttTest();
@@ -78,8 +88,6 @@ export const TestAssistantModal: React.FC<TestAssistantModalProps> = ({
       setResponseTimeMs(null);
     }
   }, [isOpen]);
-
-  if (!isOpen) return null;
 
   // 1. LLM Test Runner
   const runLlmTest = async () => {
@@ -184,18 +192,12 @@ export const TestAssistantModal: React.FC<TestAssistantModalProps> = ({
     }
   };
 
-  const stopSttTest = () => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-      recognitionRef.current = null;
-    }
-    setIsRecordingStt(false);
-  };
-
   const handleApplyToMainHUD = () => {
     onInjectTestConversation(customQuestion, llmTestOutput);
     onClose();
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md no-drag">

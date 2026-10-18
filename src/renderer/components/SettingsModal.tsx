@@ -20,7 +20,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [showKey, setShowKey] = useState<Record<string, boolean>>({});
   const [savedNotice, setSavedNotice] = useState(false);
 
-  if (!isOpen) return null;
 
   const toggleShowKey = (id: string) => {
     setShowKey((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -67,6 +66,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       models: ['llama3.2', 'qwen2.5-coder', 'deepseek-coder'],
     },
   ];
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm no-drag">

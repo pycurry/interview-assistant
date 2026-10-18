@@ -12,6 +12,7 @@ if (app && app.commandLine) {
   app.commandLine.appendSwitch('no-sandbox');
   app.commandLine.appendSwitch('disable-gpu-sandbox');
   app.commandLine.appendSwitch('disable-dev-shm-usage');
+  app.commandLine.appendSwitch('disable-gpu-vsync');
 }
 
 let mainWindow: BrowserWindow | null = null;
@@ -21,16 +22,20 @@ let isClickThrough = false;
 function createWindow() {
   settingsStore = new SettingsStore();
   const settings = settingsStore.getSettings();
+  const isLinux = process.platform === 'linux';
 
   mainWindow = new BrowserWindow({
     width: 620,
     height: 720,
     center: true,
     show: true,
-    transparent: true,
+    // On Linux X11, 32-bit transparent windows without a compositor stall buffer presentation (gl_surface_presentation_helper).
+    // Using solid backgroundColor: '#0f1117' guarantees 100% reliable rendering without disappearing.
+    transparent: !isLinux,
+    backgroundColor: '#0f1117',
     frame: false,
     alwaysOnTop: settings.alwaysOnTop ?? true,
-    hasShadow: false,
+    hasShadow: !isLinux,
     resizable: true,
     skipTaskbar: false,
     webPreferences: {
@@ -40,13 +45,18 @@ function createWindow() {
     },
   });
 
+  // Forward renderer console messages to terminal for troubleshooting
+  mainWindow.webContents.on('console-message', (_, level, message) => {
+    console.log(`[Renderer]: ${message}`);
+  });
+
   // Apply OS-level screen capture exclusion immediately
   if (settings.stealthExclusionActive) {
     applyStealthExclusion(mainWindow);
   }
 
-  // Set initial window opacity
-  if (settings.opacity && typeof settings.opacity === 'number') {
+  // Set initial window opacity (on macOS / Windows only to avoid Linux compositor alpha drops)
+  if (!isLinux && settings.opacity && typeof settings.opacity === 'number') {
     mainWindow.setOpacity(Math.max(0.4, settings.opacity));
   }
 
@@ -125,16 +135,21 @@ ipcMain.handle('settings:get', () => {
 ipcMain.handle('settings:update', (_, updates: Partial<AppSettings>) => {
   const updated = settingsStore.updateSettings(updates);
   
-  if (mainWindow && updates.opacity !== undefined) {
+  const isLinux = process.platform === 'linux';
+  if (mainWindow && !isLinux && updates.opacity !== undefined) {
     mainWindow.setOpacity(updates.opacity);
   }
   if (mainWindow && updates.alwaysOnTop !== undefined) {
-    mainWindow.setAlwaysOnTop(updates.alwaysOnTop, 'screen-saver');
+    if (process.platform === 'darwin' || process.platform === 'win32') {
+      mainWindow.setAlwaysOnTop(updates.alwaysOnTop, 'screen-saver');
+    } else {
+      mainWindow.setAlwaysOnTop(updates.alwaysOnTop);
+    }
   }
   if (mainWindow && updates.stealthExclusionActive !== undefined) {
     if (updates.stealthExclusionActive) {
       applyStealthExclusion(mainWindow);
-    } else {
+    } else if (!isLinux) {
       mainWindow.setContentProtection(false);
     }
   }

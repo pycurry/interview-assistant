@@ -20,32 +20,10 @@ export const ScreenShareTester: React.FC<ScreenShareTesterProps> = ({
   const [error, setError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  useEffect(() => {
-    if (isOpen) {
-      loadSources();
-    } else {
-      stopCapture();
-    }
-    return () => {
-      stopCapture();
-    };
-  }, [isOpen]);
-
-  const loadSources = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const desktopSources = await window.electronAPI.getDesktopSources();
-      setSources(desktopSources);
-      const screen = desktopSources.find((s: { id: string; name: string }) => s.id.startsWith('screen:')) || desktopSources[0];
-      if (screen) {
-        setSelectedSource(screen.id);
-        startCapture(screen.id);
-      }
-    } catch (e: any) {
-      setError(e.message || 'Failed to enumerate screen sources');
-    } finally {
-      setIsLoading(false);
+  const stopCapture = () => {
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+      setStream(null);
     }
   };
 
@@ -80,12 +58,34 @@ export const ScreenShareTester: React.FC<ScreenShareTesterProps> = ({
     }
   };
 
-  const stopCapture = () => {
-    if (stream) {
-      stream.getTracks().forEach((track) => track.stop());
-      setStream(null);
+  const loadSources = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const desktopSources = await window.electronAPI.getDesktopSources();
+      setSources(desktopSources);
+      const screen = desktopSources.find((s: { id: string; name: string }) => s.id.startsWith('screen:')) || desktopSources[0];
+      if (screen) {
+        setSelectedSource(screen.id);
+        startCapture(screen.id);
+      }
+    } catch (e: any) {
+      setError(e.message || 'Failed to enumerate screen sources');
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (isOpen) {
+      loadSources();
+    } else {
+      stopCapture();
+    }
+    return () => {
+      stopCapture();
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

@@ -8,7 +8,7 @@
     "build:electron": "tsc -p tsconfig.electron.json",
     "build:ui": "tsc && vite build",
     "build": "npm run build:ui && npm run build:electron",
-    "start": "tsc -p tsconfig.electron.json && electron --no-sandbox --disable-dev-shm-usage .",
+    "start": "npm run build && electron --no-sandbox --disable-dev-shm-usage .",
     "electron": "electron --no-sandbox --disable-dev-shm-usage .",
     "test": "node tests/llm-test.js",
     "test:e2e": "electron --no-sandbox --disable-dev-shm-usage --disable-gpu --ozone-platform=headless --headless tests/e2e-app-test.js"

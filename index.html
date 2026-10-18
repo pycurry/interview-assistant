@@ -4,10 +4,11 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' data: blob: https: wss:; connect-src 'self' https: wss: http:; media-src 'self' blob: mediastream:; img-src 'self' data: https:;" />
     <title>Stealth Interview Assistant</title>
   </head>
-  <body class="bg-transparent overflow-hidden select-none">
-    <div id="root"></div>
+  <body class="bg-[#0f1117] text-white m-0 p-0 overflow-hidden select-none w-screen h-screen">
+    <div id="root" class="w-full h-full"></div>
     <script type="module" src="/src/renderer/main.tsx"></script>
   </body>
 </html>
