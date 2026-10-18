@@ -280,7 +280,7 @@ export const App: React.FC = () => {
 
   if (!settings) {
     return (
-      <div className="flex items-center justify-center h-screen bg-transparent">
+      <div className="flex items-center justify-center h-screen w-screen bg-[#0f1117]">
         <div className="hud-glass p-4 rounded-xl text-xs text-gray-300">
           Loading Stealth Assistant...
         </div>

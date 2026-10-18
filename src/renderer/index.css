@@ -14,17 +14,19 @@
 
 /* Custom glassmorphism for stealth overlay */
 .hud-glass {
-  background: rgba(15, 17, 23, 0.88);
+  background-color: #0f1117;
+  background: rgba(15, 17, 23, 0.95);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .hud-glass-card {
-  background: rgba(24, 27, 36, 0.92);
+  background-color: #181b24;
+  background: rgba(24, 27, 36, 0.95);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 /* Custom subtle scrollbar */

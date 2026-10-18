@@ -77,10 +77,9 @@ export function applyStealthExclusion(win: BrowserWindow): StealthStatus {
     }
 
     if (platform === 'linux') {
-      // Linux compositors (X11 / Wayland) do not have a uniform WDA_EXCLUDEFROMCAPTURE equivalent.
-      // We set content protection and configure window hints.
-      win.setContentProtection(true);
-      win.setAlwaysOnTop(true, 'screen-saver');
+      // On Linux, setContentProtection(true) triggers DRM failure and stalls OpenGL buffer swaps
+      // in gl_surface_presentation_helper. Also, 'screen-saver' is not a valid Linux window level.
+      win.setAlwaysOnTop(true);
 
       return {
         supported: false,

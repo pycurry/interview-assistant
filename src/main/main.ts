@@ -12,7 +12,6 @@ if (app && app.commandLine) {
   app.commandLine.appendSwitch('no-sandbox');
   app.commandLine.appendSwitch('disable-gpu-sandbox');
   app.commandLine.appendSwitch('disable-dev-shm-usage');
-  app.commandLine.appendSwitch('disable-software-rasterizer');
 }
 
 let mainWindow: BrowserWindow | null = null;
@@ -26,8 +25,8 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 620,
     height: 720,
-    x: 100,
-    y: 100,
+    center: true,
+    show: true,
     transparent: true,
     frame: false,
     alwaysOnTop: settings.alwaysOnTop ?? true,
@@ -47,12 +46,19 @@ function createWindow() {
   }
 
   // Set initial window opacity
-  if (settings.opacity) {
-    mainWindow.setOpacity(settings.opacity);
+  if (settings.opacity && typeof settings.opacity === 'number') {
+    mainWindow.setOpacity(Math.max(0.4, settings.opacity));
   }
 
-  // Set window level to stay above fullscreen applications
-  mainWindow.setAlwaysOnTop(true, 'screen-saver');
+  // Set window level to stay above fullscreen applications safely by platform
+  if (process.platform === 'darwin' || process.platform === 'win32') {
+    mainWindow.setAlwaysOnTop(true, 'screen-saver');
+  } else {
+    mainWindow.setAlwaysOnTop(true);
+  }
+
+  mainWindow.show();
+  mainWindow.focus();
 
   // Register global shortcuts
   setupShortcuts(settings);
