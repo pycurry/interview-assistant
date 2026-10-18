@@ -55,7 +55,7 @@ export interface AppSettings {
   jobDescriptionText?: string;
   
   // Speech-To-Text Settings
-  sttProvider: 'deepgram' | 'whisper-api' | 'local-whisper';
+  sttProvider: 'gemini' | 'deepgram' | 'whisper-api' | 'groq' | 'local-whisper';
   deepgramApiKey?: string;
   vadSensitivity: number; // 0.0 to 1.0
   autoTriggerAI: boolean; // Auto-trigger when interviewer finishes speaking

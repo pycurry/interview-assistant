@@ -7,7 +7,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   activeProvider: 'gemini',
   activeModel: 'gemini-3.8-flash',
   promptMode: 'coding',
-  sttProvider: 'deepgram',
+  sttProvider: 'gemini',
   vadSensitivity: 0.5,
   autoTriggerAI: true,
   opacity: 0.85,
@@ -53,6 +53,9 @@ export class SettingsStore {
         const parsed = { ...DEFAULT_SETTINGS, ...JSON.parse(data) };
         if (parsed.activeModel === 'gemini-2.5-flash' || parsed.activeModel === 'gemini-1.5-flash') {
           parsed.activeModel = 'gemini-3.8-flash';
+        }
+        if (!parsed.sttProvider || parsed.sttProvider === 'local-whisper' || (parsed.sttProvider === 'whisper-api' && !parsed.openaiApiKey && parsed.geminiApiKey)) {
+          parsed.sttProvider = 'gemini';
         }
         return parsed;
       }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AppSettings, SpeakerTurn, PromptMode } from '../../shared/types';
 import { LLMService } from '../services/llmService';
+import { STTService } from '../services/sttService';
 import { 
   X, 
   FlaskConical, 
@@ -66,16 +67,23 @@ export const TestAssistantModal: React.FC<TestAssistantModalProps> = ({
   // STT Test State
   const [isRecordingStt, setIsRecordingStt] = useState(false);
   const [sttTestTranscript, setSttTestTranscript] = useState('');
-  const [sttStatus, setSttStatus] = useState<'idle' | 'listening' | 'heard' | 'error'>('idle');
+  const [sttEngine, setSttEngine] = useState('');
+  const [sttStatus, setSttStatus] = useState<'idle' | 'listening' | 'transcribing' | 'heard' | 'error'>('idle');
   const [sttError, setSttError] = useState('');
-  const recognitionRef = useRef<any>(null);
+  const [sttLatencyMs, setSttLatencyMs] = useState<number | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const testStreamRef = useRef<MediaStream | null>(null);
 
   const stopSttTest = () => {
-    if (recognitionRef.current) {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       try {
-        recognitionRef.current.stop();
+        mediaRecorderRef.current.stop();
       } catch (e) {}
-      recognitionRef.current = null;
+    }
+    if (testStreamRef.current) {
+      testStreamRef.current.getTracks().forEach((t) => t.stop());
+      testStreamRef.current = null;
     }
     setIsRecordingStt(false);
   };
@@ -136,58 +144,82 @@ export const TestAssistantModal: React.FC<TestAssistantModalProps> = ({
     }
   };
 
-  // 2. STT Test Runner (Web Speech API or SpeechRecognition)
-  const startSttTest = () => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      setSttStatus('error');
-      setSttError('Speech recognition is not supported in this environment.');
-      return;
-    }
-
+  // 2. STT Test Runner (MediaRecorder + Multimodal AI Model / Whisper)
+  const startSttTest = async () => {
     try {
       setSttStatus('listening');
       setIsRecordingStt(true);
       setSttTestTranscript('');
       setSttError('');
+      setSttEngine('');
+      setSttLatencyMs(null);
+      audioChunksRef.current = [];
 
-      const recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = true;
-      recognition.lang = 'en-US';
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+        },
+      });
+      testStreamRef.current = stream;
 
-      recognition.onresult = (event: any) => {
-        let transcript = '';
-        for (let i = 0; i < event.results.length; i++) {
-          transcript += event.results[i][0].transcript;
-        }
-        setSttTestTranscript(transcript);
-        if (event.results[0].isFinal) {
-          setSttStatus('heard');
-          setIsRecordingStt(false);
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+        ? 'audio/webm;codecs=opus'
+        : 'audio/webm';
+
+      const recorder = new MediaRecorder(stream, { mimeType });
+      mediaRecorderRef.current = recorder;
+
+      recorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
         }
       };
 
-      recognition.onerror = (event: any) => {
-        if (event.error !== 'no-speech') {
+      recorder.onstop = async () => {
+        setIsRecordingStt(false);
+        const chunks = audioChunksRef.current;
+        if (chunks.length === 0) {
+          setSttStatus('idle');
+          return;
+        }
+
+        const audioBlob = new Blob(chunks, { type: mimeType });
+        if (audioBlob.size < 1200) {
           setSttStatus('error');
-          setSttError(`Speech recognition error: ${event.error}`);
+          setSttError('Recorded audio snippet was too short. Speak a full phrase and click Stop.');
+          return;
         }
-        setIsRecordingStt(false);
+
+        setSttStatus('transcribing');
+        const startTime = Date.now();
+        try {
+          const { text, engine } = await STTService.transcribeAudioBlob(audioBlob, settings);
+          const latency = Date.now() - startTime;
+          setSttLatencyMs(latency);
+          setSttEngine(engine);
+          if (text && text.trim().length > 0) {
+            setSttTestTranscript(text);
+            setSttStatus('heard');
+          } else {
+            setSttTestTranscript('(No spoken words detected in recording)');
+            setSttStatus('heard');
+          }
+        } catch (err: any) {
+          setSttStatus('error');
+          setSttError(err.message || 'Speech-to-text transcription failed.');
+        } finally {
+          if (testStreamRef.current) {
+            testStreamRef.current.getTracks().forEach((t) => t.stop());
+            testStreamRef.current = null;
+          }
+        }
       };
 
-      recognition.onend = () => {
-        setIsRecordingStt(false);
-        if (sttTestTranscript) {
-          setSttStatus('heard');
-        }
-      };
-
-      recognition.start();
-      recognitionRef.current = recognition;
+      recorder.start(250);
     } catch (err: any) {
       setSttStatus('error');
-      setSttError(err.message);
+      setSttError(`Microphone access error: ${err.message}. Please check microphone permissions.`);
       setIsRecordingStt(false);
     }
   };
@@ -382,35 +414,56 @@ export const TestAssistantModal: React.FC<TestAssistantModalProps> = ({
 
               {/* Voice Speech Test */}
               <div className="p-4 rounded-xl bg-dark-surface/60 border border-gray-800 space-y-3">
-                <div className="font-semibold text-white">Test Speech Transcription</div>
+                <div className="flex items-center justify-between">
+                  <div className="font-semibold text-white">Test Speech Transcription</div>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-medium">
+                    {settings.geminiApiKey ? 'Gemini 3.8 Flash' : settings.groqApiKey ? 'Groq Whisper' : settings.openaiApiKey ? 'OpenAI Whisper' : 'Multimodal STT'}
+                  </span>
+                </div>
                 <p className="text-[11px] text-gray-400">
-                  Click the button below and speak a sentence (e.g., <em>"Can you explain the difference between processes and threads?"</em>) to verify that speech recognition is working.
+                  Click the button below and speak a sample interview question (e.g., <em>"Can you explain the difference between processes and threads?"</em>), then click <strong>Stop & Transcribe</strong>.
                 </p>
 
                 <div className="flex items-center gap-3">
                   <button
                     onClick={isRecordingStt ? stopSttTest : startSttTest}
+                    disabled={sttStatus === 'transcribing'}
                     className={`px-4 py-2 rounded-xl font-medium flex items-center gap-2 shadow-md transition-all ${
                       isRecordingStt
                         ? 'bg-rose-600 hover:bg-rose-500 text-white animate-pulse'
+                        : sttStatus === 'transcribing'
+                        ? 'bg-amber-600 text-white cursor-wait opacity-90'
                         : 'bg-emerald-600 hover:bg-emerald-500 text-white'
                     }`}
                   >
                     <Mic className="w-3.5 h-3.5" />
-                    <span>{isRecordingStt ? 'Stop Listening' : 'Speak to Test STT'}</span>
+                    <span>
+                      {isRecordingStt
+                        ? 'Stop & Transcribe'
+                        : sttStatus === 'transcribing'
+                        ? 'Transcribing Audio...'
+                        : 'Record & Test STT'}
+                    </span>
                   </button>
 
                   {sttStatus === 'listening' && (
-                    <span className="text-indigo-400 text-xs flex items-center gap-1.5">
+                    <span className="text-rose-400 text-xs flex items-center gap-1.5 animate-pulse font-medium">
+                      <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
+                      Recording your voice... Click 'Stop & Transcribe' when done
+                    </span>
+                  )}
+
+                  {sttStatus === 'transcribing' && (
+                    <span className="text-amber-400 text-xs flex items-center gap-1.5">
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      Listening to your voice...
+                      Transcribing via {settings.geminiApiKey ? 'Gemini 3.8 Flash' : 'AI Speech API'}...
                     </span>
                   )}
 
                   {sttStatus === 'heard' && (
                     <span className="text-emerald-400 text-xs flex items-center gap-1">
                       <CheckCircle2 className="w-3.5 h-3.5" />
-                      Transcription Successful!
+                      Transcription complete!
                     </span>
                   )}
                 </div>
@@ -423,10 +476,24 @@ export const TestAssistantModal: React.FC<TestAssistantModalProps> = ({
                 )}
 
                 {sttTestTranscript && (
-                  <div className="space-y-1">
-                    <span className="text-gray-400 text-[11px]">Transcribed Speech:</span>
-                    <div className="p-3 rounded-xl bg-black/60 border border-gray-800 text-emerald-300 font-mono text-xs select-text">
+                  <div className="space-y-2 p-3 rounded-xl bg-black/60 border border-gray-800">
+                    <div className="flex items-center justify-between text-[11px] text-gray-400">
+                      <span>Transcribed Speech ({sttEngine || 'AI Speech'}):</span>
+                      {sttLatencyMs && <span className="text-emerald-400 font-mono text-[10px]">{sttLatencyMs}ms</span>}
+                    </div>
+                    <div className="text-emerald-300 font-mono text-xs select-text">
                       "{sttTestTranscript}"
+                    </div>
+                    <div className="flex items-center gap-2 pt-1">
+                      <button
+                        onClick={() => {
+                          setCustomQuestion(sttTestTranscript);
+                        }}
+                        className="text-[11px] px-2.5 py-1 rounded-lg bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/30 transition-all flex items-center gap-1"
+                      >
+                        <Sparkles className="w-3 h-3" />
+                        <span>Use As Test Question</span>
+                      </button>
                     </div>
                   </div>
                 )}

@@ -490,9 +490,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   onChange={(e) => setFormState({ ...formState, sttProvider: e.target.value as any })}
                   className="w-full bg-dark-surface border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500"
                 >
-                  <option value="deepgram">Deepgram Nova-2 (Lowest latency WebSocket streaming, ~300ms)</option>
+                  <option value="gemini">Google Gemini 3.8 Flash (Multimodal Audio - Uses your Gemini Key)</option>
+                  <option value="groq">Groq Whisper (Ultra-Fast Cloud Whisper, ~180ms)</option>
                   <option value="whisper-api">OpenAI Whisper Cloud API</option>
-                  <option value="local-whisper">Built-in Web Speech API (Free / Zero Setup)</option>
+                  <option value="deepgram">Deepgram Nova-2 (WebSocket Live Stream)</option>
                 </select>
               </div>
 
